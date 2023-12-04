@@ -82,19 +82,12 @@ fn read_stdin_until(quit_command: &'static str) -> String {
 
 fn main() {
     let input = read_stdin_until("exit");
-    let buf: Vec<char> = input.chars().collect();
 
     let mut prev = None;
     let mut res = String::new();
-    let mut skip = 0;
 
-    for (i, c) in buf.iter().enumerate() {
-        if skip != 0 {
-            skip -= 1;
-            continue;
-        }
-
-        if let Some(old_quote) = Quote::from_char(*c) {
+    for c in input.chars() {
+        if let Some(old_quote) = Quote::from_char(c) {
             match old_quote.direction {
                 Some(_) => continue, // Already curly
                 None => {
@@ -104,28 +97,14 @@ fn main() {
                 }
             }
         } else {
-            match (*c, buf.get(i + 1), buf.get(i + 2)) {
-                // `---`
-                ('-', Some('-'), Some('-')) => {
-                    res.push('—');
-                    skip = 2;
-                }
-                // `--(x)`
-                ('-', Some('-'), None) | ('-', Some('-'), Some(_)) => {
-                    res.push('–');
-                    skip = 1;
-                }
-                // `...`
-                ('.', Some('.'), Some('.')) => {
-                    res.push('…');
-                    skip = 2;
-                }
-                _ => {
-                    res.push(*c);
-                }
-            }
+            res.push(c);
         }
-        prev = Some(*c);
+        prev = Some(c);
     }
+
+    let res = res
+        .replace("---", "—")
+        .replace("--", "–")
+        .replace("...", "…");
     println!("\n\n{res}");
 }

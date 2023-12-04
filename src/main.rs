@@ -143,7 +143,7 @@ fn main() {
         }
     }
 
-    let input = read_stdin_until(&["exit", "quit", ":w", ":wq"]);
+    let input = read_stdin_until(&["exit", "quit", ":w", ":wq", ":q"]);
     let res = if explicit {
         smart_quotes_explicit(&input)
     } else {

@@ -2,19 +2,16 @@
 // - https://gist.github.com/maxwell-bland/59f2b09a551f91d6e38fcf9eac1a8dfb
 // - https://github.com/rust-lang/book/pull/780/files#diff-9c45c870f37858b7cd69e9998520ddbfcab0c6b08e4dc32c898af283994f6153
 
-/*
-Lorem ipsum "dolor sit" amet---consectetur adipisicing elit, sed 201--203 do eiusmod
-tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco 'laboris nisi' ut "aliquip 'ex' ea" commodo
-consequat.
+use std::{io, env, process};
 
+const HELP: &'static str = "\
+smrty
+  Typographic compiler.
+  https://github.com/hotgluebanjo
 
-Lorem ipsum ``dolor sit'' amet---consectetur adipisicing elit, sed 201--203 do eiusmod
-tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco `laboris nisi' ut ``aliquip `ex' ea'' commodo
-consequat.
-*/
-use std::io;
+OPTIONS
+  -h | --help        Print help
+  -e | --explicit    Parse explicit LaTeX-style quotes (``double'', `single')";
 
 #[derive(Debug, Copy, Clone)]
 enum QuoteDirection {
@@ -122,9 +119,24 @@ fn read_stdin_until(quit_command: &'static str) -> String {
 }
 
 fn main() {
-    let input = read_stdin_until("exit");
-    let explicit = true;
+    let args: Vec<String> = env::args().skip(1).collect();
+    let mut explicit = false;
 
+    for arg in args {
+        match arg.as_str() {
+            "-h" | "--help" => {
+                println!("{HELP}");
+                process::exit(0);
+            }
+            "-e" | "--explicit" => explicit = true,
+            _ => {
+                eprintln!("Unrecognized argument: `{arg}`. Check `-h`.");
+                process::exit(1);
+            }
+        }
+    }
+
+    let input = read_stdin_until("exit");
     let res = if explicit {
         smart_quotes_explicit(&input)
     } else {
@@ -137,4 +149,36 @@ fn main() {
         .replace("...", "…");
 
     println!("\n\n{res}");
+}
+
+/*
+Lorem ipsum "dolor sit" amet---consectetur adipisicing elit, sed 201--203 do eiusmod
+tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco 'laboris nisi' ut "aliquip 'ex' ea" commodo
+consequat.
+
+Lorem ipsum ``dolor sit'' amet---consectetur adipisicing elit, sed 201--203 do eiusmod
+tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco `laboris nisi' ut ``aliquip `ex' ea'' commodo
+consequat.
+*/
+#[test]
+fn test_smart_quotes() {
+    let implicit = "Lorem ipsum \"dolor sit\" amet consectetur adipisicing elit, sed 201 203 do eiusmod
+tempor incididunt ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco 'laboris nisi' ut \"aliquip 'ex' ea\" commodo
+consequat.";
+
+    let explicit = "Lorem ipsum ``dolor sit'' amet consectetur adipisicing elit, sed 201 203 do eiusmod
+tempor incididunt ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco `laboris nisi' ut ``aliquip `ex' ea\" commodo
+consequat.";
+
+    let expected = "Lorem ipsum “dolor sit” amet consectetur adipisicing elit, sed 201 203 do eiusmod
+tempor incididunt ut labore et’s dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco ‘laboris nisi’ ut “aliquip ‘ex’ ea” commodo
+consequat.";
+
+    assert_eq!(smart_quotes_implicit(implicit), expected);
+    assert_eq!(smart_quotes_explicit(explicit), expected);
 }

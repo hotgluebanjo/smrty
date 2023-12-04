@@ -4,7 +4,7 @@
 
 use std::{env, io, process};
 
-const HELP: &'static str = "\
+const HELP: &str = "\
 smrty
   Typographic compiler.
   https://github.com/hotgluebanjo
@@ -80,12 +80,21 @@ impl Quote {
     }
 }
 
+fn is_escaped(prev: Option<char>) -> bool {
+    matches!(prev, Some('\\'))
+}
+
 fn smart_quotes_implicit(input: &str) -> String {
     let mut buf = String::new();
     let mut prev = None;
 
     for c in input.chars() {
         if let Some(old_quote) = Quote::from_char(c) {
+            if is_escaped(prev) {
+                buf.pop(); // Skip instead?
+                buf.push(c);
+                continue;
+            }
             match old_quote.direction {
                 Some(_) => continue, // Already curly. Possible inversion.
                 None => {
@@ -103,6 +112,8 @@ fn smart_quotes_implicit(input: &str) -> String {
     buf
 }
 
+// Explicit quotes. Same as LaTeX.
+// Avoiding regex, but that would add escaping.
 fn smart_quotes_explicit(input: &str) -> String {
     input
         .replace("\"", "”")

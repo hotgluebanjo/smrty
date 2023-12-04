@@ -10,9 +10,9 @@ $ smrty
 “Somethings’s ‘test’ example.” Test—example 140–141…for example.
 ```
 
-Similar to [Pandoc](https://pandoc.org/) `smart` but with no language support. Escaping does not work.
+Similar to [Pandoc](https://pandoc.org/)'s' `smart` extension but with no language support (meaning it will probably mess up code blocks). Ideal for quick conversion. Escaping only works for implicit quotes.
 
-LaTeX-like explicit quotes are supported, which solve the direction issue with contractions:
+LaTeX-like explicit quotes are supported, which solve the directional issue with contractions:
 
 ```
 $ smrty -e

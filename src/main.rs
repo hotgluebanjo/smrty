@@ -5,7 +5,7 @@
 use std::{env, io, process};
 
 const HELP: &str = "\
-smrty
+smrty 0.3.0
   Typographic compiler.
   https://github.com/hotgluebanjo
 
@@ -16,7 +16,7 @@ USAGE
 
 OPTIONS
   -h | --help        Print help
-  -e | --explicit    Parse explicit LaTeX-style quotes (``double'', `single')";
+  -e | --explicit    Parse explicit LaTeX-style quotes (`single', ``double'')";
 
 #[derive(Debug, Copy, Clone)]
 enum QuoteDirection {
@@ -204,4 +204,11 @@ consequat.";
 
     assert_eq!(smart_quotes_implicit(implicit), expected);
     assert_eq!(smart_quotes_explicit(explicit), expected);
+}
+
+#[test]
+fn test_implicit_quote_escaping() {
+    let input = "\\\"something\\\", \"something\"";
+    let expected = "\"something\", “something”";
+    assert_eq!(smart_quotes_implicit(input), expected);
 }

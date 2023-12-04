@@ -1,6 +1,6 @@
 # `smrty`
 
-Typographic quotes, dashes and ellipsis from plaintext stdin.
+Typographic quotes, dashes and ellipsis from plaintext `stdin`.
 
 ```
 $ smrty

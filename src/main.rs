@@ -2,7 +2,7 @@
 // - https://gist.github.com/maxwell-bland/59f2b09a551f91d6e38fcf9eac1a8dfb
 // - https://github.com/rust-lang/book/pull/780/files#diff-9c45c870f37858b7cd69e9998520ddbfcab0c6b08e4dc32c898af283994f6153
 
-use std::{io, env, process};
+use std::{env, io, process};
 
 const HELP: &'static str = "\
 smrty
@@ -12,7 +12,7 @@ smrty
 USAGE
   smrty [OPTIONS]
 
-  Drops into stdin. When done inputting text, enter `exit`.
+  Drops into stdin. When done inputting text, enter `exit`, `quit` or a short vim write/quit command.
 
 OPTIONS
   -h | --help        Print help
@@ -42,7 +42,7 @@ enum QuoteKind {
     Double,
 }
 
-// Theoretically this type should allow two-way conversion.
+// Should be invertible.
 #[derive(Debug)]
 struct Quote {
     direction: Option<QuoteDirection>,
@@ -55,25 +55,27 @@ impl Quote {
     }
 
     fn from_char(c: char) -> Option<Self> {
+        use crate::{QuoteDirection::*, QuoteKind::*};
         match c {
-            '\'' => Some(Self::new(None, QuoteKind::Single)),
-            '"' => Some(Self::new(None, QuoteKind::Double)),
-            '‘' => Some(Self::new(Some(QuoteDirection::Open), QuoteKind::Single)),
-            '’' => Some(Self::new(Some(QuoteDirection::Closed), QuoteKind::Single)),
-            '“' => Some(Self::new(Some(QuoteDirection::Open), QuoteKind::Double)),
-            '”' => Some(Self::new(Some(QuoteDirection::Closed), QuoteKind::Double)),
+            '\'' => Some(Self::new(None, Single)),
+            '"' => Some(Self::new(None, Double)),
+            '‘' => Some(Self::new(Some(Open), Single)),
+            '’' => Some(Self::new(Some(Closed), Single)),
+            '“' => Some(Self::new(Some(Open), Double)),
+            '”' => Some(Self::new(Some(Closed), Double)),
             _ => None,
         }
     }
 
     fn to_char(&self) -> char {
+        use crate::{QuoteDirection::*, QuoteKind::*};
         match (self.direction, self.kind) {
-            (None, QuoteKind::Single) => '\'',
-            (None, QuoteKind::Double) => '"',
-            (Some(QuoteDirection::Open), QuoteKind::Single) => '‘',
-            (Some(QuoteDirection::Closed), QuoteKind::Single) => '’',
-            (Some(QuoteDirection::Open), QuoteKind::Double) => '“',
-            (Some(QuoteDirection::Closed), QuoteKind::Double) => '”',
+            (None, Single) => '\'',
+            (None, Double) => '"',
+            (Some(Open), Single) => '‘',
+            (Some(Closed), Single) => '’',
+            (Some(Open), Double) => '“',
+            (Some(Closed), Double) => '”',
         }
     }
 }
@@ -171,17 +173,20 @@ consequat.
 */
 #[test]
 fn test_smart_quotes() {
-    let implicit = "Lorem ipsum \"dolor sit\" amet consectetur adipisicing elit, sed 201 203 do eiusmod
+    let implicit =
+        "Lorem ipsum \"dolor sit\" amet consectetur adipisicing elit, sed 201 203 do eiusmod
 tempor incididunt ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
 quis nostrud exercitation ullamco 'laboris nisi' ut \"aliquip 'ex' ea\" commodo
 consequat.";
 
-    let explicit = "Lorem ipsum ``dolor sit'' amet consectetur adipisicing elit, sed 201 203 do eiusmod
+    let explicit =
+        "Lorem ipsum ``dolor sit'' amet consectetur adipisicing elit, sed 201 203 do eiusmod
 tempor incididunt ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
 quis nostrud exercitation ullamco `laboris nisi' ut ``aliquip `ex' ea\" commodo
 consequat.";
 
-    let expected = "Lorem ipsum “dolor sit” amet consectetur adipisicing elit, sed 201 203 do eiusmod
+    let expected =
+        "Lorem ipsum “dolor sit” amet consectetur adipisicing elit, sed 201 203 do eiusmod
 tempor incididunt ut labore et’s dolore magna aliqua. Ut enim ad minim veniam,
 quis nostrud exercitation ullamco ‘laboris nisi’ ut “aliquip ‘ex’ ea” commodo
 consequat.";

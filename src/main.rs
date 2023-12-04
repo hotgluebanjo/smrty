@@ -1,7 +1,17 @@
+// - https://github.com/Robert42/smart_quotes
+// - https://gist.github.com/maxwell-bland/59f2b09a551f91d6e38fcf9eac1a8dfb
+// - https://github.com/rust-lang/book/pull/780/files#diff-9c45c870f37858b7cd69e9998520ddbfcab0c6b08e4dc32c898af283994f6153
+
 /*
 Lorem ipsum "dolor sit" amet---consectetur adipisicing elit, sed 201--203 do eiusmod
 tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
 quis nostrud exercitation ullamco 'laboris nisi' ut "aliquip 'ex' ea" commodo
+consequat.
+
+
+Lorem ipsum ``dolor sit'' amet---consectetur adipisicing elit, sed 201--203 do eiusmod
+tempor incididunt...ut labore et's dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco `laboris nisi' ut ``aliquip `ex' ea'' commodo
 consequat.
 */
 use std::io;
@@ -13,7 +23,6 @@ enum QuoteDirection {
 }
 
 impl QuoteDirection {
-    // https://github.com/Robert42/smart_quotes
     fn from_previous(prev: Option<char>) -> Self {
         match prev {
             Some(c) => match c {
@@ -67,6 +76,38 @@ impl Quote {
     }
 }
 
+fn smart_quotes_implicit(input: &str) -> String {
+    let mut buf = String::new();
+    let mut prev = None;
+
+    for c in input.chars() {
+        if let Some(old_quote) = Quote::from_char(c) {
+            match old_quote.direction {
+                Some(_) => continue, // Already curly. Possible inversion.
+                None => {
+                    let direction = QuoteDirection::from_previous(prev);
+                    let new_quote = Quote::new(Some(direction), old_quote.kind);
+                    buf.push(new_quote.to_char());
+                }
+            }
+        } else {
+            buf.push(c);
+        }
+        prev = Some(c);
+    }
+
+    buf
+}
+
+fn smart_quotes_explicit(input: &str) -> String {
+    input
+        .replace("\"", "”")
+        .replace("``", "“")
+        .replace("''", "”")
+        .replace("`", "‘")
+        .replace("'", "’")
+}
+
 fn read_stdin_until(quit_command: &'static str) -> String {
     let mut buf = String::new();
     loop {
@@ -82,29 +123,18 @@ fn read_stdin_until(quit_command: &'static str) -> String {
 
 fn main() {
     let input = read_stdin_until("exit");
+    let explicit = true;
 
-    let mut prev = None;
-    let mut res = String::new();
-
-    for c in input.chars() {
-        if let Some(old_quote) = Quote::from_char(c) {
-            match old_quote.direction {
-                Some(_) => continue, // Already curly
-                None => {
-                    let direction = QuoteDirection::from_previous(prev);
-                    let new_quote = Quote::new(Some(direction), old_quote.kind);
-                    res.push(new_quote.to_char());
-                }
-            }
-        } else {
-            res.push(c);
-        }
-        prev = Some(c);
-    }
+    let res = if explicit {
+        smart_quotes_explicit(&input)
+    } else {
+        smart_quotes_implicit(&input)
+    };
 
     let res = res
         .replace("---", "—")
         .replace("--", "–")
         .replace("...", "…");
+
     println!("\n\n{res}");
 }

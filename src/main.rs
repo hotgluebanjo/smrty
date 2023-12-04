@@ -104,35 +104,26 @@ fn main() {
                 }
             }
         } else {
-            if *c == '-' {
-                match (buf.get(i + 1), buf.get(i + 2)) {
-                    // `---`
-                    (Some('-'), Some('-')) => {
-                        res.push('—');
-                        skip = 2;
-                        continue;
-                    }
-                    // `--(x)`
-                    (Some('-'), None) | (Some('-'), Some(_)) => {
-                        res.push('–');
-                        skip = 1;
-                        continue;
-                    }
-                    _ => {}
+            match (*c, buf.get(i + 1), buf.get(i + 2)) {
+                // `---`
+                ('-', Some('-'), Some('-')) => {
+                    res.push('—');
+                    skip = 2;
+                }
+                // `--(x)`
+                ('-', Some('-'), None) | ('-', Some('-'), Some(_)) => {
+                    res.push('–');
+                    skip = 1;
+                }
+                // `...`
+                ('.', Some('.'), Some('.')) => {
+                    res.push('…');
+                    skip = 2;
+                }
+                _ => {
+                    res.push(*c);
                 }
             }
-            if *c == '.' {
-                match (buf.get(i + 1), buf.get(i + 2)) {
-                    // `...`
-                    (Some('.'), Some('.')) => {
-                        res.push('…');
-                        skip = 2;
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
-            res.push(*c);
         }
         prev = Some(*c);
     }

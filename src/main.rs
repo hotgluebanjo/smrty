@@ -9,6 +9,11 @@ smrty
   Typographic compiler.
   https://github.com/hotgluebanjo
 
+USAGE
+  smrty [OPTIONS]
+
+  Drops into stdin. When done inputting text, enter `exit`.
+
 OPTIONS
   -h | --help        Print help
   -e | --explicit    Parse explicit LaTeX-style quotes (``double'', `single')";
@@ -105,13 +110,15 @@ fn smart_quotes_explicit(input: &str) -> String {
         .replace("'", "’")
 }
 
-fn read_stdin_until(quit_command: &'static str) -> String {
+fn read_stdin_until(quit_commands: &[&str]) -> String {
     let mut buf = String::new();
-    loop {
+    'outer: loop {
         let mut line = String::new();
         let _ = io::stdin().read_line(&mut line);
-        if line.trim() == quit_command {
-            break;
+        for q in quit_commands {
+            if &line.trim() == q {
+                break 'outer;
+            }
         }
         buf.push_str(&line);
     }
@@ -130,13 +137,13 @@ fn main() {
             }
             "-e" | "--explicit" => explicit = true,
             _ => {
-                eprintln!("Unrecognized argument: `{arg}`. Check `-h`.");
+                eprintln!("Unrecognized argument: `{arg}`. Try `-h`.");
                 process::exit(1);
             }
         }
     }
 
-    let input = read_stdin_until("exit");
+    let input = read_stdin_until(&["exit", "quit", ":w", ":wq"]);
     let res = if explicit {
         smart_quotes_explicit(&input)
     } else {

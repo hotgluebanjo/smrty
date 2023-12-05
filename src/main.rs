@@ -5,14 +5,18 @@
 use std::{env, io, process};
 
 const HELP: &str = "\
-smrty 0.3.0
+smrty 0.3.1
   Typographic compiler.
   https://github.com/hotgluebanjo
 
 USAGE
   smrty [OPTIONS]
 
-  Drops into stdin. When done inputting text, enter `exit`, `quit` or a short vim write/quit command.
+  Drops into stdin. When done inputting text, enter one of:
+    - EOF (CTRL+Z on Windows, CTRL+D on Unix)
+    - `exit`
+    - `quit`
+    - a short vim write/quit command (`:q`, `:w`, `:wq`)
 
 OPTIONS
   -h | --help        Print help
@@ -127,7 +131,9 @@ fn read_stdin_until(quit_commands: &[&str]) -> String {
     let mut buf = String::new();
     'outer: loop {
         let mut line = String::new();
-        let _ = io::stdin().read_line(&mut line);
+        if io::stdin().read_line(&mut line).is_err() {
+            return buf;
+        }
         for q in quit_commands {
             if &line.trim() == q {
                 break 'outer;
